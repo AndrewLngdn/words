@@ -80,8 +80,8 @@ const state: State = {
 		.fill(0)
 		.map(() => ({
 			position: {
-				x: Math.random() * this.canvas.height - config.ballRadius,
-				y: Math.random() * this.canvas.width - config.ballRadius,
+				x: Math.random() * canvas.height - config.ballRadius,
+				y: Math.random() * canvas.width - config.ballRadius,
 			},
 			velocity: {
 				x: Math.random() * config.initialSpeed,
