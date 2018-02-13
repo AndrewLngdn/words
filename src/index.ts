@@ -63,16 +63,22 @@ interface State {
 	balls: Array<{ position: Point; velocity: Point }>
 }
 
+const rectBounds = {
+	top: 10,
+	bottom: canvas.height - 100,
+	left: 10,
+	right: canvas.width - 10,
+}
+
+const rectSize = {
+	width: rectBounds.right - rectBounds.left,
+	height: rectBounds.bottom - rectBounds.top,
+}
+
 const config = {
-	initialBalls: 10,
+	initialBalls: 100,
 	initialSpeed: 5,
 	ballRadius: 10,
-	rectBounds: {
-		top: 10,
-		bottom: canvas.height - 100,
-		left: 10,
-		right: canvas.width - 100,
-	},
 }
 
 const state: State = {
@@ -80,12 +86,12 @@ const state: State = {
 		.fill(0)
 		.map(() => ({
 			position: {
-				x: Math.random() * canvas.height - config.ballRadius,
-				y: Math.random() * canvas.width - config.ballRadius,
+				x: Math.random() * rectSize.width - 2 * config.ballRadius,
+				y: Math.random() * rectSize.height - 2 * config.ballRadius,
 			},
 			velocity: {
-				x: Math.random() * config.initialSpeed,
-				y: Math.random() * config.initialSpeed,
+				x: (Math.random() - 0.5) * config.initialSpeed,
+				y: (Math.random() - 0.5) * config.initialSpeed,
 			},
 		})),
 }
@@ -96,20 +102,20 @@ function update() {
 		ball.position.x += ball.velocity.x
 		ball.position.y += ball.velocity.y
 		// Keep in bounds.
-		if (ball.position.x - config.ballRadius < config.rectBounds.left) {
-			ball.position.x *= -1
+		if (ball.position.x - config.ballRadius < 0) {
+			ball.position.x += -1 * (ball.position.x - config.ballRadius)
 			ball.velocity.x *= -1
 		}
-		if (ball.position.x + config.ballRadius > config.rectBounds.right) {
-			ball.position.x = 2 * config.rectBounds.right - ball.position.x
+		if (ball.position.x + config.ballRadius > rectSize.width) {
+			ball.position.x -= ball.position.x + config.ballRadius - rectSize.width
 			ball.velocity.x *= -1
 		}
-		if (ball.position.y - config.ballRadius < config.rectBounds.top) {
-			ball.position.y *= -1
+		if (ball.position.y - config.ballRadius < 0) {
+			ball.position.y += -1 * (ball.position.y - config.ballRadius)
 			ball.velocity.y *= -1
 		}
-		if (ball.position.y + config.ballRadius > config.rectBounds.bottom) {
-			ball.position.y = 2 * config.rectBounds.bottom - ball.position.y
+		if (ball.position.y + config.ballRadius > rectSize.height) {
+			ball.position.y -= ball.position.y + config.ballRadius - rectSize.height
 			ball.velocity.y *= -1
 		}
 	}
@@ -123,14 +129,14 @@ function draw() {
 	clear()
 
 	box({
-		...config.rectBounds,
+		...rectBounds,
 		stroke: "#000000",
 	})
 
 	for (const ball of state.balls) {
 		circle({
-			x: ball.position.x,
-			y: ball.position.y,
+			x: ball.position.x + rectBounds.left,
+			y: ball.position.y + rectBounds.top,
 			r: config.ballRadius,
 			fill: "#000000",
 		})
