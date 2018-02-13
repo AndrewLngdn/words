@@ -198,22 +198,38 @@ function dir(p1: Point, p2: Point) {
 	return norm(diff(p1, p2))
 }
 
+function bound(p: Point) {
+	if (p.x < rectBounds.left) {
+		p.x = rectBounds.left
+	}
+	if (p.x > rectBounds.right) {
+		p.x = rectBounds.right
+	}
+	if (p.y < rectBounds.top) {
+		p.y = rectBounds.top
+	}
+	if (p.y > rectBounds.bottom) {
+		p.y = rectBounds.bottom
+	}
+	return p
+}
+
 function update() {
 	for (const wall of state.walls) {
 		if (!wall.complete) {
 			if (inBounds(wall.left)) {
-				wall.left = {
+				wall.left = bound({
 					x: wall.left.x - wall.direction.x * config.wallSpeed,
 					y: wall.left.y - wall.direction.y * config.wallSpeed,
-				}
+				})
 			}
 			if (inBounds(wall.right)) {
-				wall.right = {
+				wall.right = bound({
 					x: wall.right.x + wall.direction.x * config.wallSpeed,
 					y: wall.right.y + wall.direction.y * config.wallSpeed,
-				}
+				})
 			}
-			if (!inBounds(wall.left) && !inBounds(wall.left)) {
+			if (!inBounds(wall.left) && !inBounds(wall.right)) {
 				wall.complete = true
 			}
 		}
