@@ -1,5 +1,5 @@
 {
-	"name": "typescript-boilerplate",
+	"name": "jezz",
 	"version": "1.0.0",
 	"description": "boilerplate for web applications using typescript and webpack",
 	"main": "index.js",
@@ -14,15 +14,10 @@
 	"license": "MIT",
 	"dependencies": {
 		"glamor": "^2.20.40",
-		"lodash": "^4.17.4",
-		"react": "^16.1.1",
-		"react-dom": "^16.1.1",
-		"reactive-magic": "^2.1.1"
+		"lodash": "^4.17.4"
 	},
 	"devDependencies": {
 		"@types/lodash": "^4.14.85",
-		"@types/react": "^16.0.25",
-		"@types/react-dom": "^16.0.3",
 		"@types/webpack": "^3.8.1",
 		"awesome-typescript-loader": "^3.4.1",
 		"file-loader": "^1.1.5",
