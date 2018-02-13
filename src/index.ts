@@ -1,3 +1,18 @@
+/*
+
+Ideas:
+- Herding sheep
+	- Border collies make the fences
+	- Pen is in the middle
+	- Herd the sheep as fast as you can.
+- Prison break
+	- prisoners are on the loose
+	- get build cells for them
+	so dark. ew.
+
+*/
+
+import * as _ from "lodash"
 import { css } from "glamor"
 
 css.global("html, body", {
@@ -93,18 +108,6 @@ interface State {
 	walls: Array<WallState>
 }
 
-const rectBounds = {
-	top: 10,
-	bottom: canvas.height - 100,
-	left: 10,
-	right: canvas.width - 10,
-}
-
-const rectSize = {
-	width: rectBounds.right - rectBounds.left,
-	height: rectBounds.bottom - rectBounds.top,
-}
-
 const config = {
 	initialBalls: 10,
 	initialSpeed: 5,
@@ -117,8 +120,8 @@ const state: State = {
 		.fill(0)
 		.map(() => ({
 			position: {
-				x: Math.random() * rectSize.width - 2 * config.ballRadius,
-				y: Math.random() * rectSize.height - 2 * config.ballRadius,
+				x: Math.random() * canvas.width - 2 * config.ballRadius,
+				y: Math.random() * canvas.height - 2 * config.ballRadius,
 			},
 			velocity: {
 				x: (Math.random() - 0.5) * config.initialSpeed,
@@ -173,16 +176,19 @@ canvas.addEventListener("mouseup", event => {
 })
 
 function inBounds(p: Point) {
-	return (
-		p.x > rectBounds.left &&
-		p.x < rectBounds.right &&
-		p.y > rectBounds.top &&
-		p.y < rectBounds.bottom
-	)
+	return p.x > 0 && p.x < canvas.width && p.y > 0 && p.y < canvas.height
 }
 
 function diff(p1: Point, p2: Point) {
 	return { x: p1.x - p2.x, y: p1.y - p2.y }
+}
+
+function add(p1: Point, p2: Point) {
+	return { x: p1.x + p2.x, y: p1.y + p2.y }
+}
+
+function mult(p1: Point, x: number) {
+	return { x: p1.x * x, y: p1.y * x }
 }
 
 function l2(p: Point) {
@@ -199,19 +205,35 @@ function dir(p1: Point, p2: Point) {
 }
 
 function bound(p: Point) {
-	if (p.x < rectBounds.left) {
-		p.x = rectBounds.left
+	if (p.x < 0) {
+		p.x = 0
 	}
-	if (p.x > rectBounds.right) {
-		p.x = rectBounds.right
+	if (p.x > canvas.width) {
+		p.x = canvas.width
 	}
-	if (p.y < rectBounds.top) {
-		p.y = rectBounds.top
+	if (p.y < 0) {
+		p.y = 0
 	}
-	if (p.y > rectBounds.bottom) {
-		p.y = rectBounds.bottom
+	if (p.y > canvas.height) {
+		p.y = canvas.height
 	}
 	return p
+}
+
+function dot(p1: Point, p2: Point) {
+	return p1.x * p2.x + p1.y * p2.y
+}
+
+function rot(p1: Point, deg: number) {
+	const a = Math.PI * deg / 180
+	return {
+		x: p1.x * Math.cos(a) - p1.y * Math.sin(a),
+		y: p1.x * Math.sin(a) + p1.y * Math.cos(a),
+	}
+}
+
+function sign(n: number) {
+	return n / n
 }
 
 function update() {
@@ -239,22 +261,61 @@ function update() {
 		// Update position.
 		ball.position.x += ball.velocity.x
 		ball.position.y += ball.velocity.y
+
 		// Keep in rect bounds.
 		if (ball.position.x - config.ballRadius < 0) {
 			ball.position.x += -1 * (ball.position.x - config.ballRadius)
 			ball.velocity.x *= -1
 		}
-		if (ball.position.x + config.ballRadius > rectSize.width) {
-			ball.position.x -= ball.position.x + config.ballRadius - rectSize.width
+		if (ball.position.x + config.ballRadius > canvas.width) {
+			ball.position.x -= ball.position.x + config.ballRadius - canvas.width
 			ball.velocity.x *= -1
 		}
 		if (ball.position.y - config.ballRadius < 0) {
 			ball.position.y += -1 * (ball.position.y - config.ballRadius)
 			ball.velocity.y *= -1
 		}
-		if (ball.position.y + config.ballRadius > rectSize.height) {
-			ball.position.y -= ball.position.y + config.ballRadius - rectSize.height
+		if (ball.position.y + config.ballRadius > canvas.height) {
+			ball.position.y -= ball.position.y + config.ballRadius - canvas.height
 			ball.velocity.y *= -1
+		}
+
+		// Bounce off any walls
+		for (const wall of state.walls) {
+			// Orthoganol direction to the wall
+			const orth = rot(wall.direction, 90)
+			// Dot product should be the distance to the wall.
+			const dist = dot(orth, diff(wall.origin, ball.position))
+			// Check if ball intersected with the line
+			if (Math.abs(dist) < config.ballRadius) {
+				ball.position = add(
+					ball.position,
+					mult(orth, sign(dist) * (Math.abs(dist) - config.ballRadius))
+				)
+				// https://math.stackexchange.com/questions/13261/how-to-get-a-reflection-vector
+				ball.velocity = diff(
+					ball.velocity,
+					mult(orth, 2 * dot(orth, ball.velocity))
+				)
+			}
+
+			// if (
+			// 	(prevDist < 0 && nextDist > -1 * config.ballRadius) ||
+			// 	(prevDist > 0 && nextDist < config.ballRadius)
+			// ) {
+			// 	ball.position = add(
+			// 		ball.position,
+			// 		mult(
+			// 			orth,
+			// 			-1 * sign(prevDist) * (config.ballRadius - Math.abs(nextDist))
+			// 		)
+			// 	)
+			// 	// https://math.stackexchange.com/questions/13261/how-to-get-a-reflection-vector
+			// 	ball.velocity = diff(
+			// 		ball.velocity,
+			// 		mult(orth, 2 * dot(orth, ball.velocity))
+			// 	)
+			// }
 		}
 	}
 }
@@ -267,14 +328,17 @@ function draw() {
 	clear()
 
 	box({
-		...rectBounds,
+		top: 1,
+		left: 1,
+		right: canvas.width - 2,
+		bottom: canvas.height - 2,
 		stroke: "#000000",
 	})
 
 	for (const ball of state.balls) {
 		circle({
-			x: ball.position.x + rectBounds.left,
-			y: ball.position.y + rectBounds.top,
+			x: ball.position.x + 0,
+			y: ball.position.y + 0,
 			r: config.ballRadius,
 			fill: "#000000",
 		})
