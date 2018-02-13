@@ -109,7 +109,7 @@ interface State {
 }
 
 const config = {
-	initialBalls: 10,
+	initialBalls: 100,
 	initialSpeed: 5,
 	ballRadius: 10,
 	wallSpeed: 7,
@@ -233,7 +233,7 @@ function rot(p1: Point, deg: number) {
 }
 
 function sign(n: number) {
-	return n / n
+	return n / Math.abs(n)
 }
 
 function update() {
