@@ -3,7 +3,7 @@ import * as HtmlWebpackPlugin from "html-webpack-plugin"
 import { Configuration } from "webpack"
 
 const config: Configuration = {
-	entry: "./src/index.tsx",
+	entry: "./src/index.ts",
 	resolve: {
 		extensions: [".js", ".ts", ".tsx"],
 	},
