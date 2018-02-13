@@ -50,6 +50,14 @@ function box(args: {
 	)
 }
 
+function line(args: { start: Point; end: Point; stroke: string }) {
+	ctx.beginPath()
+	ctx.moveTo(args.start.x, args.start.y)
+	ctx.lineTo(args.end.x, args.end.y)
+	ctx.strokeStyle = args.stroke
+	ctx.stroke()
+}
+
 //////////////////////////////////////////////////////////////////////////
 // State
 //////////////////////////////////////////////////////////////////////////
@@ -59,8 +67,19 @@ interface Point {
 	y: number
 }
 
+interface MouseDownState {
+	down: true
+	start: Point
+	current: Point
+}
+
+interface MouseUpState {
+	down: false
+}
+
 interface State {
 	balls: Array<{ position: Point; velocity: Point }>
+	mouse: MouseUpState | MouseDownState
 }
 
 const rectBounds = {
@@ -94,7 +113,42 @@ const state: State = {
 				y: (Math.random() - 0.5) * config.initialSpeed,
 			},
 		})),
+	mouse: { down: false },
 }
+
+canvas.addEventListener("mousedown", event => {
+	state.mouse = {
+		down: true,
+		start: {
+			x: event.pageX - canvas.offsetLeft,
+			y: event.pageY - canvas.offsetTop,
+		},
+		current: {
+			x: event.pageX - canvas.offsetLeft,
+			y: event.pageY - canvas.offsetTop,
+		},
+	}
+})
+
+canvas.addEventListener("mousemove", event => {
+	if (state.mouse.down) {
+		state.mouse = {
+			...state.mouse,
+			current: {
+				x: event.pageX - canvas.offsetLeft,
+				y: event.pageY - canvas.offsetTop,
+			},
+		}
+	}
+})
+
+canvas.addEventListener("mouseup", event => {
+	if (state.mouse.down) {
+		state.mouse = {
+			down: false,
+		}
+	}
+})
 
 function update() {
 	for (const ball of state.balls) {
@@ -139,6 +193,14 @@ function draw() {
 			y: ball.position.y + rectBounds.top,
 			r: config.ballRadius,
 			fill: "#000000",
+		})
+	}
+
+	if (state.mouse.down) {
+		line({
+			start: state.mouse.start,
+			end: state.mouse.current,
+			stroke: "#FF0000",
 		})
 	}
 }
