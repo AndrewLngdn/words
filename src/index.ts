@@ -77,9 +77,20 @@ interface MouseUpState {
 	down: false
 }
 
+interface WallState {
+	complete: boolean
+	// The directions from the mouse
+	origin: Point
+	direction: Point
+	// The progress of the walls getting built.
+	left: Point
+	right: Point
+}
+
 interface State {
 	balls: Array<{ position: Point; velocity: Point }>
 	mouse: MouseUpState | MouseDownState
+	walls: Array<WallState>
 }
 
 const rectBounds = {
@@ -95,9 +106,10 @@ const rectSize = {
 }
 
 const config = {
-	initialBalls: 100,
+	initialBalls: 10,
 	initialSpeed: 5,
 	ballRadius: 10,
+	wallSpeed: 7,
 }
 
 const state: State = {
@@ -114,7 +126,10 @@ const state: State = {
 			},
 		})),
 	mouse: { down: false },
+	walls: [],
 }
+
+window["state"] = state
 
 canvas.addEventListener("mousedown", event => {
 	state.mouse = {
@@ -144,18 +159,71 @@ canvas.addEventListener("mousemove", event => {
 
 canvas.addEventListener("mouseup", event => {
 	if (state.mouse.down) {
+		state.walls.push({
+			complete: false,
+			origin: state.mouse.start,
+			direction: dir(state.mouse.start, state.mouse.current),
+			left: state.mouse.start,
+			right: state.mouse.start,
+		})
 		state.mouse = {
 			down: false,
 		}
 	}
 })
 
+function inBounds(p: Point) {
+	return (
+		p.x > rectBounds.left &&
+		p.x < rectBounds.right &&
+		p.y > rectBounds.top &&
+		p.y < rectBounds.bottom
+	)
+}
+
+function diff(p1: Point, p2: Point) {
+	return { x: p1.x - p2.x, y: p1.y - p2.y }
+}
+
+function l2(p: Point) {
+	return Math.sqrt(p.x * p.x + p.y * p.y)
+}
+
+function norm(p: Point) {
+	const d = l2(p)
+	return { x: p.x / d, y: p.y / d }
+}
+
+function dir(p1: Point, p2: Point) {
+	return norm(diff(p1, p2))
+}
+
 function update() {
+	for (const wall of state.walls) {
+		if (!wall.complete) {
+			if (inBounds(wall.left)) {
+				wall.left = {
+					x: wall.left.x - wall.direction.x * config.wallSpeed,
+					y: wall.left.y - wall.direction.y * config.wallSpeed,
+				}
+			}
+			if (inBounds(wall.right)) {
+				wall.right = {
+					x: wall.right.x + wall.direction.x * config.wallSpeed,
+					y: wall.right.y + wall.direction.y * config.wallSpeed,
+				}
+			}
+			if (!inBounds(wall.left) && !inBounds(wall.left)) {
+				wall.complete = true
+			}
+		}
+	}
+
 	for (const ball of state.balls) {
 		// Update position.
 		ball.position.x += ball.velocity.x
 		ball.position.y += ball.velocity.y
-		// Keep in bounds.
+		// Keep in rect bounds.
 		if (ball.position.x - config.ballRadius < 0) {
 			ball.position.x += -1 * (ball.position.x - config.ballRadius)
 			ball.velocity.x *= -1
@@ -201,6 +269,14 @@ function draw() {
 			start: state.mouse.start,
 			end: state.mouse.current,
 			stroke: "#FF0000",
+		})
+	}
+
+	for (const wall of state.walls) {
+		line({
+			start: wall.left,
+			end: wall.right,
+			stroke: "#00FF00",
 		})
 	}
 }
